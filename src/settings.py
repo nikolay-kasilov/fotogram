@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     DB_NAME: str
 
+    SALT: str
+
     class Config:
         """Конфиг насйтроек."""
 
