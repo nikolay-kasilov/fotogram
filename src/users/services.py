@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from bcrypt import hashpw
-from fastapi import APIRouter, status
+from fastapi import status
 from fastapi.responses import Response
 
 from database import session_factory
@@ -11,9 +11,8 @@ from settings import settings
 from .models import User
 from .schemas import SignUpSchema, UserSchema
 
-router = APIRouter(prefix="/users", tags=["users"])
-@router.post("/signup/", response_model=UserSchema)
-def signup(ud: SignUpSchema) -> Response:
+
+def signup(ud: SignUpSchema) -> Response | UserSchema:
     if ud.password != ud.password_repeat:
         return Response(status_code=status.HTTP_400_BAD_REQUEST,
                         content={"error": "Passwords must match"})
@@ -24,7 +23,7 @@ def signup(ud: SignUpSchema) -> Response:
                 fullname=ud.fullname,
                 password=hashpw(
                     ud.password.encode(),
-                    settings.SALT,
+                    settings.SALT.encode(),
                 ).decode("utf-8"),
                 birthday=ud.birthday,
                 bio=ud.bio,
@@ -33,7 +32,7 @@ def signup(ud: SignUpSchema) -> Response:
             )
         except Exception as e:
             return Response(status_code=status.HTTP_400_BAD_REQUEST,
-                            content={"error": str(e)})
+                            content={"error": ""})
         else:
             session.add(user)
             session.commit()
@@ -47,5 +46,4 @@ def signup(ud: SignUpSchema) -> Response:
                 avatar=user.avatar,
                 birthday=user.birthday,
             )
-            return Response(status_code=status.HTTP_201_CREATED,
-                            content=ur)
+            return ur
