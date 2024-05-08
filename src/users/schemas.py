@@ -24,3 +24,13 @@ class UserSchema(BaseModel):
     last_activity: datetime
     bio: str | None
     avatar: str | None
+
+class Token(BaseModel):
+    """Токен доступа."""
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    """Данные для размещения в токене."""
+    username: str | None = None
