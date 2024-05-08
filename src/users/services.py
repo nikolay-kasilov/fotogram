@@ -41,6 +41,7 @@ def signup(ud: SignUpSchema) -> Response | UserSchema:
                 username=user.username,
                 fullname=user.fullname,
                 signup_at=user.signup_at,
+                bio=user.bio,
                 last_activity=user.last_activity,
                 avatar=user.avatar,
                 birthday=user.birthday,
