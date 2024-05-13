@@ -1,9 +1,13 @@
 """Файл моделей ORM для части работы пользователей."""
 from datetime import datetime
 
-from sqlalchemy.orm import Mapped, mapped_column
-
+from sqlalchemy import text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import Uuid
 from database import Base
+from uuid import UUID
+
+from posts.models import Post
 
 
 class User(Base):
@@ -21,4 +25,4 @@ class User(Base):
     last_activity: Mapped[datetime]
     avatar: Mapped[str | None]
 
-
+    posts: Mapped[list[Post]] = relationship("Post", back_populates="author")

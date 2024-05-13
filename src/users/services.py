@@ -31,8 +31,9 @@ def get_password_hash(password):
 def authenticate_user(username: str, password: str):
     with (session_factory() as session):
         user = session.query(User).filter_by(username=username).first()
-        if not user \
-            or not verify_password(password, user.password):
+        if not user:
+            return
+        if not verify_password(password, user.password):
             return
         return user
 
