@@ -5,7 +5,6 @@ from users.routing import router as users_router
 
 app = FastAPI()
 app.include_router(users_router, prefix="/api/v1", tags=["api/v1"])
-app.include_router(users_router, prefix="/api/v2", tags=["api/v2"])
 
 
 @app.get("/")

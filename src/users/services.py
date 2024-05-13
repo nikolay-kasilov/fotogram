@@ -84,6 +84,17 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         return user
 
 
+CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+async def read_users_me(
+    current_user: CurrentUser,
+):
+    return Response(status_code=200,
+                    content=current_user.fullname + " " + current_user.birthday.strftime(
+                        "%B %d, %Y"))
+
+
 def signup(ud: SignUpSchema) -> Response | UserSchema:
     if ud.password != ud.password_repeat:
         return Response(status_code=status.HTTP_400_BAD_REQUEST,
