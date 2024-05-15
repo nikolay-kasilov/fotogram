@@ -42,7 +42,7 @@ def create_access_token(data: dict, expires_delta: int = 15):
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=expires_delta)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(data.copy(), settings.SECRET_KEY,
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY,
                              algorithm=settings.ALGORITHM)
     return encoded_jwt
 
@@ -73,6 +73,11 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY,
                              algorithms=[settings.ALGORITHM])
+        exp: int = payload.get("exp")
+        token_date = datetime.fromtimestamp(exp, timezone.utc)
+        if token_date.replace(tzinfo=timezone.utc) < datetime.now(
+            timezone.utc):
+            raise credentials_exception
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
