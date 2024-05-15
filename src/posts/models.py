@@ -17,5 +17,5 @@ class Post(Base):
     created_at: Mapped[datetime]
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
-    images: Mapped[list[FileModel]] = relationship("FileModel", back_populates="posts")
+    images: Mapped[list[FileModel]] = relationship("FileModel", back_populates="post")
     author: Mapped["User"] = relationship("User", back_populates="posts")

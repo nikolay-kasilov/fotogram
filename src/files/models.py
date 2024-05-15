@@ -15,4 +15,4 @@ class FileModel(Base):
                                            "gen_random_uuid()"))
     extension: Mapped[str]
     post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'))
-    posts: Mapped["Post"] = relationship("Post", back_populates="images")
+    post: Mapped["Post"] = relationship("Post", back_populates="images")
