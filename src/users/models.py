@@ -23,3 +23,5 @@ class User(Base):
     avatar: Mapped[str | None]
 
     posts: Mapped[list[Post]] = relationship("Post", back_populates="author")
+    likes: Mapped[list["Like"]] = relationship("Like", back_populates="user")
+    comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="user")

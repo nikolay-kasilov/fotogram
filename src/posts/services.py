@@ -2,12 +2,13 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import Form, UploadFile
+from fastapi import Form, UploadFile, HTTPException
 from starlette.responses import Response
 
 from database import session_factory
 from files.models import FileModel
-from posts.models import Like, Post
+from posts.models import Like, Post, Comment
+from posts.schemas import CommentInputSchema, CommentSchema
 from settings import settings
 from users.services import CurrentUser
 
@@ -52,3 +53,40 @@ def like_post(current_user: CurrentUser, post_id: int, like: bool) -> Response:
             session.commit()
             return Response(status_code=200)
 
+
+def create_comment(current_user: CurrentUser, post_id: int,
+                   comment: CommentInputSchema) -> CommentSchema:
+    with session_factory() as session:
+        user_comment = Comment(
+            user=current_user,
+            post_id=post_id,
+            content=comment.content,
+            created_at=datetime.now(),
+        )
+        session.add(user_comment)
+        session.commit()
+        return CommentSchema(
+            id=user_comment.id,
+            content=user_comment.content,
+            created_at=user_comment.created_at,
+            user_id=user_comment.user_id,
+            post_id=user_comment.post_id
+        )
+
+
+def delete_comment(current_user: CurrentUser, post_id: int,
+                   comment_id: int) -> Response:
+    with session_factory() as session:
+        comment = session.query(Comment).filter(
+            Comment.id == comment_id).filter(
+            Comment.post_id == post_id
+        ).first()
+        if not comment:
+            raise HTTPException(status_code=404,
+                                detail=f"Comment with id {comment_id} not found")
+        if comment.user_id != current_user.id:
+            raise HTTPException(status_code=403,
+                                detail="You are not permission to delete this comment")
+        session.delete(comment)
+        session.commit()
+        return Response(status_code=204)
