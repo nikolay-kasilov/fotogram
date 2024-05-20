@@ -1,8 +1,6 @@
 from datetime import datetime
-from uuid import UUID
 
-from sqlalchemy import text, ForeignKey
-from sqlalchemy.types import Uuid
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -19,3 +17,11 @@ class Post(Base):
 
     images: Mapped[list[FileModel]] = relationship("FileModel", back_populates="post")
     author: Mapped["User"] = relationship("User", back_populates="posts")
+
+class Like(Base):
+    __tablename__ = "likes"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"), primary_key=True)
+
+

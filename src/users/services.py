@@ -1,20 +1,19 @@
 """Функции для обработки запросов."""
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-from bcrypt import hashpw
-from fastapi import status, HTTPException, Depends
+from fastapi import Depends, HTTPException, status
 from fastapi.responses import Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from database import session_factory
 from settings import settings
 
 from .models import User
-from .schemas import SignUpSchema, UserSchema, Token
+from .schemas import SignUpSchema, Token, UserSchema
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -32,15 +31,15 @@ def authenticate_user(username: str, password: str):
     with (session_factory() as session):
         user = session.query(User).filter_by(username=username).first()
         if not user:
-            return
+            return None
         if not verify_password(password, user.password):
-            return
+            return None
         return user
 
 
 def create_access_token(data: dict, expires_delta: int = 15):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=expires_delta)
+    expire = datetime.now(UTC) + timedelta(minutes=expires_delta)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY,
                              algorithm=settings.ALGORITHM)
@@ -59,7 +58,7 @@ async def login_for_access_token(
         )
     access_token = create_access_token(
         data={"sub": user.username},
-        expires_delta=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        expires_delta=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
     )
     return Token(access_token=access_token, token_type="bearer")
 
@@ -74,9 +73,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         payload = jwt.decode(token, settings.SECRET_KEY,
                              algorithms=[settings.ALGORITHM])
         exp: int = payload.get("exp")
-        token_date = datetime.fromtimestamp(exp, timezone.utc)
-        if token_date.replace(tzinfo=timezone.utc) < datetime.now(
-            timezone.utc):
+        token_date = datetime.fromtimestamp(exp, UTC)
+        if token_date.replace(tzinfo=UTC) < datetime.now(
+            UTC):
             raise credentials_exception
         username: str = payload.get("sub")
         if username is None:
@@ -123,7 +122,7 @@ def signup(ud: SignUpSchema) -> Response | UserSchema:
                 signup_at=datetime.now(),
                 last_activity=datetime.now(),
             )
-        except Exception as e:
+        except Exception:
             return Response(status_code=status.HTTP_400_BAD_REQUEST,
                             content=json.dumps(
                                 {"error": "Error creating user"}))

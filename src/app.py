@@ -1,12 +1,12 @@
 """Модуль для запуска FASTAPI."""
-from pathlib import Path
 
 from fastapi import FastAPI
 
-from users.routing import router as users_router
-from settings import settings
-from posts.routing import router as posts_router
 from files.routing import router as files_router
+from posts.routing import router as posts_router
+from settings import settings
+from users.routing import router as users_router
+
 
 def create_app() -> FastAPI:
     if not settings.PATH_FILES.is_dir():
