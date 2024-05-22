@@ -1,6 +1,7 @@
 """Модуль для запуска FASTAPI."""
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from files.routing import router as files_router
 from posts.routing import router as posts_router
@@ -11,7 +12,15 @@ from users.routing import router as users_router
 def create_app() -> FastAPI:
     if not settings.PATH_FILES.is_dir():
         settings.PATH_FILES.mkdir()
-    return FastAPI()
+    fastapi_app = FastAPI()
+    fastapi_app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    return fastapi_app
 
 
 app = create_app()
