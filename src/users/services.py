@@ -8,11 +8,12 @@ from fastapi.responses import Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy import and_
 
 from database import session_factory
 from settings import settings
 
-from .models import User
+from .models import User, Subscribe
 from .schemas import SignUpSchema, Token, UserSchema
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -122,10 +123,10 @@ def signup(ud: SignUpSchema) -> Response | UserSchema:
                 signup_at=datetime.now(),
                 last_activity=datetime.now(),
             )
-        except Exception:
+        except Exception as e:
             return Response(status_code=status.HTTP_400_BAD_REQUEST,
                             content=json.dumps(
-                                {"error": "Error creating user"}))
+                                {"error": f"Error creating user {e}"}))
         else:
             session.add(user)
             session.commit()
@@ -140,3 +141,35 @@ def signup(ud: SignUpSchema) -> Response | UserSchema:
                 birthday=user.birthday,
             )
             return ur
+
+
+def subscribe(current_user: CurrentUser, author_id: int) -> Response:
+    with session_factory() as session:
+        author = session.query(User).filter_by(id=author_id).first()
+        if author is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail="Author not found")
+        current_subscribe = session.query(Subscribe).filter(
+            and_(Subscribe.subscriber == current_user,
+            Subscribe.author == author)).first()
+        if not current_subscribe:
+            current_subscribe = Subscribe(author=author,
+                                          subscriber=current_user)
+            session.add(current_subscribe)
+            session.commit()
+        return Response(status_code=status.HTTP_200_OK)
+
+
+def unsubscribe(current_user: CurrentUser, author_id: int) -> Response:
+    with session_factory() as session:
+        author = session.query(User).filter_by(id=author_id).first()
+        if author is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail="Author not found")
+        current_subscribe = session.query(Subscribe).filter(
+            Subscribe.author == author).filter(
+            Subscribe.subscriber == current_user).first()
+        if current_subscribe:
+            session.delete(current_subscribe)
+            session.commit()
+        return Response(status_code=status.HTTP_200_OK)
