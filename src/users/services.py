@@ -1,20 +1,20 @@
 """Функции для обработки запросов."""
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-from bcrypt import hashpw
-from fastapi import status, HTTPException, Depends
+from fastapi import Depends, HTTPException, status
 from fastapi.responses import Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy import and_
 
 from database import session_factory
 from settings import settings
 
-from .models import User
-from .schemas import SignUpSchema, UserSchema, Token
+from .models import User, Subscribe
+from .schemas import SignUpSchema, Token, UserSchema
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -32,17 +32,17 @@ def authenticate_user(username: str, password: str):
     with (session_factory() as session):
         user = session.query(User).filter_by(username=username).first()
         if not user:
-            return
+            return None
         if not verify_password(password, user.password):
-            return
+            return None
         return user
 
 
 def create_access_token(data: dict, expires_delta: int = 15):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=expires_delta)
+    expire = datetime.now(UTC) + timedelta(minutes=expires_delta)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(data.copy(), settings.SECRET_KEY,
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY,
                              algorithm=settings.ALGORITHM)
     return encoded_jwt
 
@@ -59,7 +59,7 @@ async def login_for_access_token(
         )
     access_token = create_access_token(
         data={"sub": user.username},
-        expires_delta=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        expires_delta=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
     )
     return Token(access_token=access_token, token_type="bearer")
 
@@ -73,6 +73,11 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY,
                              algorithms=[settings.ALGORITHM])
+        exp: int = payload.get("exp")
+        token_date = datetime.fromtimestamp(exp, UTC)
+        if token_date.replace(tzinfo=UTC) < datetime.now(
+            UTC):
+            raise credentials_exception
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -121,7 +126,7 @@ def signup(ud: SignUpSchema) -> Response | UserSchema:
         except Exception as e:
             return Response(status_code=status.HTTP_400_BAD_REQUEST,
                             content=json.dumps(
-                                {"error": "Error creating user"}))
+                                {"error": f"Error creating user {e}"}))
         else:
             session.add(user)
             session.commit()
@@ -136,3 +141,35 @@ def signup(ud: SignUpSchema) -> Response | UserSchema:
                 birthday=user.birthday,
             )
             return ur
+
+
+def subscribe(current_user: CurrentUser, author_id: int) -> Response:
+    with session_factory() as session:
+        author = session.query(User).filter_by(id=author_id).first()
+        if author is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail="Author not found")
+        current_subscribe = session.query(Subscribe).filter(
+            and_(Subscribe.subscriber == current_user,
+            Subscribe.author == author)).first()
+        if not current_subscribe:
+            current_subscribe = Subscribe(author=author,
+                                          subscriber=current_user)
+            session.add(current_subscribe)
+            session.commit()
+        return Response(status_code=status.HTTP_200_OK)
+
+
+def unsubscribe(current_user: CurrentUser, author_id: int) -> Response:
+    with session_factory() as session:
+        author = session.query(User).filter_by(id=author_id).first()
+        if author is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail="Author not found")
+        current_subscribe = session.query(Subscribe).filter(
+            Subscribe.author == author).filter(
+            Subscribe.subscriber == current_user).first()
+        if current_subscribe:
+            session.delete(current_subscribe)
+            session.commit()
+        return Response(status_code=status.HTTP_200_OK)

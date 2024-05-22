@@ -13,3 +13,4 @@ session_factory = sessionmaker(bind=engine)
 
 class Base(DeclarativeBase):
     """Базовая модель."""
+
