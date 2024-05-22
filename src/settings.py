@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     PATH_FILES: str
 
     class Config:
-        """Конфиг насйтроек."""
+        """Конфиг настроек."""
 
         case_sensitive = True
         env_file = "../.env"

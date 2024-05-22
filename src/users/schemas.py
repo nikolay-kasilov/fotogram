@@ -27,10 +27,12 @@ class UserSchema(BaseModel):
 
 class Token(BaseModel):
     """Токен доступа."""
+
     access_token: str
     token_type: str
 
 
 class TokenData(BaseModel):
     """Данные для размещения в токене."""
+
     username: str | None = None
