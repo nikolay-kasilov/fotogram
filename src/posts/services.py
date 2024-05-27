@@ -3,14 +3,35 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import Form, UploadFile, HTTPException
+from sqlalchemy.orm import selectinload
 from starlette.responses import Response
 
 from database import session_factory
 from files.models import FileModel
 from posts.models import Like, Post, Comment
-from posts.schemas import CommentInputSchema, CommentSchema
+from posts.schemas import CommentInputSchema, CommentSchema, PostSchema, \
+    ResponsePostsSchema
 from settings import settings
 from users.services import CurrentUser
+
+
+def get_posts(current_user: CurrentUser) -> ResponsePostsSchema:
+    with session_factory() as session:
+        posts = session.query(Post).options(selectinload(Post.images),
+                                            selectinload(Post.author)).all()
+        posts_schemas = [
+            PostSchema(
+                id=post.id,
+                images=list(
+                    map(lambda x: x.get_filename(), post.images)),
+                content=post.content,
+                author_id=post.author.id,
+                author_name=post.author.fullname,
+                created_at=post.created_at,
+            )
+            for post in posts
+        ]
+        return ResponsePostsSchema(posts=posts_schemas)
 
 
 async def create_post(current_user: CurrentUser,

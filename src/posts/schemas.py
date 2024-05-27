@@ -5,14 +5,20 @@ from pydantic import BaseModel
 
 class PostSchema(BaseModel):
     id: int
-    filename: str
+    images: list[str]
     content: str
     author_id: int
     author_name: str
     created_at: datetime
 
+
+class ResponsePostsSchema(BaseModel):
+    posts: list[PostSchema]
+
+
 class CommentInputSchema(BaseModel):
     content: str
+
 
 class CommentSchema(BaseModel):
     id: int

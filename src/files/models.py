@@ -16,3 +16,6 @@ class FileModel(Base):
     extension: Mapped[str]
     post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"))
     post: Mapped["Post"] = relationship("Post", back_populates="images")
+
+    def get_filename(self) -> str:
+        return f"{self.uuid}.{self.extension}"
