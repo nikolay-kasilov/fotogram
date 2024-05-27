@@ -39,7 +39,7 @@
         }
         const check_token = () => {
             const token = localStorage.getItem("access_token")
-            if (token !== undefined) {
+            if (token !== null) {
                 alert("Вы вошли!")
             }
         }
