@@ -27,10 +27,12 @@ ${imgs}
 ${post.author_name}<br>
 ${post.created_at}<br>
 ${post.content}<br>
+<span class="count_likes" id="count_likes${post.id}">${post.count_likes}</span> <button onclick="switch_like('like${post.id}')" class="like_button" id="like${post.id}">Лайк!</button>
 </div>
 `
             div_posts.innerHTML += div_post
         }
+        check_likes(posts)
     }
     const URL = "http://localhost:8000/api/v1/posts/"
     const send = async (token) => {
@@ -44,8 +46,62 @@ ${post.content}<br>
     const check_token = () => {
         const token = localStorage.getItem("access_token")
     }
+    const check_likes = (posts) => {
+        let liked_posts_id = []
+        for (let post of posts)
+            if (post.liked)
+                liked_posts_id.push(post.id)
+        console.log(liked_posts_id)
+        const dom_likes = document.getElementsByClassName("like_button")
+        for (let dom_like of dom_likes) {
+            let id = dom_like.id
+            id = id.replace("like", "")
+            if (liked_posts_id.includes(Number(id))) {
+                add_like(dom_like, true)
+            }
+        }
+    }
+    const switch_like = (id) => {
+        let dom_like = document.getElementById(id)
+        if (dom_like.classList.contains("enabled"))
+            remove_like(dom_like)
+        else
+            add_like(dom_like)
+    }
+    const add_like = (dom_like, ignore_count = false) => {
+        let id = dom_like.id
+            id = id.replace("like", "")
+        dom_like.classList.add("enabled")
+        dom_like.innerHTML = "Убрать лайк"
+        let count_likes = document.getElementById("count_likes" + id)
+        if (!ignore_count) {
+            send_like(token, URL, id, true)
+            count_likes.innerHTML = String(Number(count_likes.innerHTML) + 1)
+        }
+    }
+    const remove_like = (dom_like) => {
+        let id = dom_like.id
+            id = id.replace("like", "")
+        send_like(token, URL, id, false)
+        dom_like.classList.remove("enabled")
+        dom_like.innerHTML = "Лайк!"
+        let count_likes = document.getElementById("count_likes" + id)
+        console.log(String(Number(count_likes.innerHTML) - 1))
+        count_likes.innerHTML = String(Number(count_likes.innerHTML) - 1)
+    }
+    const send_like = async (token, url, post_id, like) => {
+        url = url + `${post_id}/like/?like=${like}`
+        return await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+        });
+    }
+
     check_token()
     get_posts()
+
 </script>
 </body>
 </html>

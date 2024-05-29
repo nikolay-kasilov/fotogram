@@ -6,6 +6,8 @@ from fastapi import Form, UploadFile, HTTPException
 from sqlalchemy.orm import selectinload
 from starlette.responses import Response
 
+
+
 from database import session_factory
 from files.models import FileModel
 from posts.models import Like, Post, Comment
@@ -18,7 +20,8 @@ from users.services import CurrentUser
 def get_posts(current_user: CurrentUser) -> ResponsePostsSchema:
     with session_factory() as session:
         posts = session.query(Post).options(selectinload(Post.images),
-                                            selectinload(Post.author)).all()
+                                            selectinload(Post.author),
+                                            selectinload(Post.likes)).all()
         posts_schemas = [
             PostSchema(
                 id=post.id,
@@ -28,6 +31,8 @@ def get_posts(current_user: CurrentUser) -> ResponsePostsSchema:
                 author_id=post.author.id,
                 author_name=post.author.fullname,
                 created_at=post.created_at,
+                count_likes=len(post.likes),
+                liked=current_user.id in map(lambda x: x.user_id, post.likes),
             )
             for post in posts
         ]
