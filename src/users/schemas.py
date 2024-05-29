@@ -36,3 +36,4 @@ class TokenData(BaseModel):
     """Данные для размещения в токене."""
 
     username: str | None = None
+
