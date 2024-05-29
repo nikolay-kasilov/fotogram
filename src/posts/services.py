@@ -6,14 +6,13 @@ from fastapi import Form, UploadFile, HTTPException
 from sqlalchemy.orm import selectinload
 from starlette.responses import Response
 
-
-
 from database import session_factory
 from files.models import FileModel
 from posts.models import Like, Post, Comment
 from posts.schemas import CommentInputSchema, CommentSchema, PostSchema, \
-    ResponsePostsSchema
+    ResponsePostsSchema, CommentWithUserSchema, CommentsOutputSchema
 from settings import settings
+from users.schemas import UserSchema
 from users.services import CurrentUser
 
 
@@ -33,10 +32,36 @@ def get_posts(current_user: CurrentUser) -> ResponsePostsSchema:
                 created_at=post.created_at,
                 count_likes=len(post.likes),
                 liked=current_user.id in map(lambda x: x.user_id, post.likes),
+                count_comments=len(post.comments)
             )
             for post in posts
         ]
         return ResponsePostsSchema(posts=posts_schemas)
+
+
+def get_comments(current_user: CurrentUser, post_id: int):
+    with session_factory() as session:
+        comments = session.query(Comment).options(
+            selectinload(Comment.user)).filter(
+            Comment.post_id == post_id).all()
+        comments_schemas = [
+            CommentWithUserSchema(
+                id=comment.id,
+                user=UserSchema(username=comment.user.username,
+                                fullname=comment.user.fullname,
+                                birthday=comment.user.birthday,
+                                signup_at=comment.user.signup_at,
+                                last_activity=comment.user.last_activity,
+                                bio=comment.user.bio,
+                                avatar=comment.user.avatar),
+                post_id = post_id,
+                content=comment.content,
+                created_at=comment.created_at,
+                owner=current_user == comment.user,
+            )
+            for comment in comments
+        ]
+        return CommentsOutputSchema(comments=comments_schemas)
 
 
 async def create_post(current_user: CurrentUser,

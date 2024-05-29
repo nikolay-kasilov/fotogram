@@ -28,6 +28,8 @@ ${post.author_name}<br>
 ${post.created_at}<br>
 ${post.content}<br>
 <span class="count_likes" id="count_likes${post.id}">${post.count_likes}</span> <button onclick="switch_like('like${post.id}')" class="like_button" id="like${post.id}">Лайк!</button>
+<div class="post_comments" id="post_comments${post.id}"><p style="color: blue;" class="count_comments" id="count_comments${post.id}" onclick="open_comments(${post.id})">Комментарии (${post.count_comments})</p>
+</div>
 </div>
 `
             div_posts.innerHTML += div_post
@@ -98,7 +100,52 @@ ${post.content}<br>
             },
         });
     }
-
+    const open_comments = async (post_id) => {
+        let div_comments = document.getElementById("post_comments"+post_id)
+        const response = await get_comments(token, URL, post_id)
+        let comments = (await response.json()).comments
+        div_comments.innerHTML = ""
+        for (let comment of comments) {
+            div_comments.innerHTML += `
+            ${comment.user.fullname} <br>
+            ${comment.created_at} <br> <br>
+            ${comment.content} <br> <br> <br>
+            `
+        }
+        div_comments.innerHTML += `
+<br>
+        <input type="text" id="text_comment${post_id}"> <button onclick="create_comment(${post_id})">Отправить!</button>
+        `
+    }
+    const create_comment = async (post_id) => {
+        const text = document.getElementById("text_comment"+post_id).value
+        console.log(text)
+        document.getElementById("text_comment"+post_id).value = ""
+        if (text !== "") {
+            await send_comment(token, URL, post_id, text)
+        }
+        await open_comments(post_id)
+    }
+    const send_comment = async (token, url, post_id, text) => {
+        url = url + `${post_id}/comments/create/`
+        return await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({content: text})
+        });
+    }
+    const get_comments = async (token, url, post_id) => {
+        url = url + `${post_id}/comments/`
+        return await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+            },
+        });
+    }
     check_token()
     get_posts()
 
