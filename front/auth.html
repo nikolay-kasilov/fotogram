@@ -12,6 +12,8 @@
     <p>Пароль</p>
     <input type="text" id="password">
     <button onclick="auth()">Войти</button>
+    <br>
+    <a href="/signup/">Зарегистрироваться</a>
     <script>
         const auth = async () => {
             let username = document.getElementById("username").value
@@ -28,6 +30,7 @@
                 localStorage.setItem("access_token",
                     rep.access_token)
                 alert("Вы вошли!")
+                location.replace("/")
             }
         }
         const URL = "http://localhost:8000/api/v1/users/login"

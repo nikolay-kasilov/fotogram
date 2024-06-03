@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Главная</title>
+    <link rel="stylesheet" href="style.css" type="text/css" media="all">
 </head>
 <body>
 <div>
@@ -16,6 +17,8 @@
 
     const get_posts = async () => {
         const response = await send(token)
+        if (response.status === 401)
+            location.replace("/auth/")
         const posts = (await response.json()).posts
         for (let post of posts) {
             let imgs = ``;
@@ -36,7 +39,7 @@ ${post.content}<br>
         }
         check_likes(posts)
     }
-    const URL = `http://localhost:8000/api/v1/posts/?user_id=2`
+    const URL = `http://localhost:8000/api/v1/posts/`
     const send = async (token) => {
         return await fetch(URL, {
             method: 'GET',
