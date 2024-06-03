@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+</head>
+<body>
+<script>
+    let s = window.location.search
+    s = s.split(/[?&]/)
+    let params = {}
+    for (let str of s) {
+        str = str.split('=')
+        if (str.length === 2)
+            params[str[0]] = str[1]
+    }
+    alert(`user_id = ${params.user_id}`)
+</script>
+</body>
+</html>
