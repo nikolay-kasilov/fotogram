@@ -12,15 +12,23 @@ from posts.models import Like, Post, Comment
 from posts.schemas import CommentInputSchema, CommentSchema, PostSchema, \
     ResponsePostsSchema, CommentWithUserSchema, CommentsOutputSchema
 from settings import settings
+from users.models import User
 from users.schemas import UserSchema
 from users.services import CurrentUser
 
 
-def get_posts(current_user: CurrentUser) -> ResponsePostsSchema:
+def get_posts(current_user: CurrentUser, user_id: int | None = None) -> ResponsePostsSchema:
     with session_factory() as session:
-        posts = session.query(Post).options(selectinload(Post.images),
+        query = session.query(Post).options(selectinload(Post.images),
                                             selectinload(Post.author),
-                                            selectinload(Post.likes)).all()
+                                            selectinload(Post.likes))
+
+        if user_id:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            query = query.filter(Post.author_id == user_id)
+        posts = query.all()
         posts_schemas = [
             PostSchema(
                 id=post.id,

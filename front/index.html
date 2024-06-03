@@ -36,7 +36,7 @@ ${post.content}<br>
         }
         check_likes(posts)
     }
-    const URL = "http://localhost:8000/api/v1/posts/"
+    const URL = `http://localhost:8000/api/v1/posts/?user_id=2`
     const send = async (token) => {
         return await fetch(URL, {
             method: 'GET',
