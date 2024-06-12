@@ -25,7 +25,7 @@ class Settings(BaseSettings):
         """Конфиг насйтроек."""
 
         case_sensitive = True
-        env_file = ".env"
+        env_file = "../.env"
         env_file_encoding = "utf-8"
 
 settings = Settings()
