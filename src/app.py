@@ -29,4 +29,4 @@ def read_root() -> dict[str, str]:
         dict[str, str]: тестовый словарь.
 
     """
-    return {"Hello": "World"}
+    return {"Hello": "World ", "Надпись находится в файле" : "app.py"}
