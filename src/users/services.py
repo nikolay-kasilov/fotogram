@@ -13,8 +13,9 @@ from sqlalchemy import and_
 from database import session_factory
 from settings import settings
 
-from .models import User, Subscribe
-from .schemas import SignUpSchema, Token, UserSchema
+from .models import User, Subscribe, Message
+from .schemas import SignUpSchema, Token, UserSchema, SendMessage, \
+    UserChatSchema
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -151,7 +152,7 @@ def subscribe(current_user: CurrentUser, author_id: int) -> Response:
                                 detail="Author not found")
         current_subscribe = session.query(Subscribe).filter(
             and_(Subscribe.subscriber == current_user,
-            Subscribe.author == author)).first()
+                 Subscribe.author == author)).first()
         if not current_subscribe:
             current_subscribe = Subscribe(author=author,
                                           subscriber=current_user)
@@ -173,3 +174,24 @@ def unsubscribe(current_user: CurrentUser, author_id: int) -> Response:
             session.delete(current_subscribe)
             session.commit()
         return Response(status_code=status.HTTP_200_OK)
+
+
+def send_message(current_user: CurrentUser, message: SendMessage) -> Response:
+    with session_factory() as session:
+        receiver = session.query(User).filter_by(
+            id=message.receiver_id).first()
+        if receiver is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, )
+        m = Message(sender=current_user, receiver=receiver,
+                    content=message.content, timestamp=datetime.now())
+        session.add(m)
+        session.commit()
+        return Response(status_code=status.HTTP_201_CREATED)
+
+
+def get_chats(current_user: CurrentUser) -> list[UserChatSchema]:
+    with session_factory() as session:
+        last_send_messages = session.query(Message.receiver).filter(
+            Message.sender == current_user).order_by(
+            Message.timestamp.desc()).distinct()
+        print(last_send_messages)

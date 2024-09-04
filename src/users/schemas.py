@@ -36,3 +36,18 @@ class TokenData(BaseModel):
     """Данные для размещения в токене."""
 
     username: str | None = None
+
+class SendMessage(BaseModel):
+    content: str
+    receiver_id: int
+
+class GetMessage(BaseModel):
+    id: int
+    sender_id: int
+    receiver_id: int
+    content: str
+    timestamp: datetime
+
+
+class UserChatSchema(UserSchema):
+    last_message: GetMessage

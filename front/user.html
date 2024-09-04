@@ -34,7 +34,7 @@
         for (let post of posts) {
             let imgs = ``;
             for (let image of post.images) {
-                imgs += `<img src="http://localhost:8000/api/v1/files/${image}" height="200px" width="200px"><br>`
+                imgs += `<img src="/api/v1/files/${image}" height="200px" width="200px"><br>`
             }
             const div_post = `<div>
 ${imgs}
@@ -50,7 +50,7 @@ ${post.content}<br>
         }
         check_likes(posts)
     }
-    const URL = `http://localhost:8000/api/v1/posts?user_id=${user_id}`
+    const URL = `/api/v1/posts?user_id=${user_id}`
     const send = async (token) => {
         return await fetch(URL, {
             method: 'GET',

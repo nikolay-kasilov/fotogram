@@ -5,4 +5,6 @@
 
 .env
 
+database-data
+
 **/__pycache__

@@ -38,7 +38,7 @@
                 location.replace("/auth/")
             }
         }
-        const URL = "http://localhost:8000/api/v1/users/signup"
+        const URL = "/api/v1/users/signup"
         const send = async (data) => {
             return await fetch(URL, {
                 method: 'POST',
