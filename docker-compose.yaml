@@ -31,6 +31,8 @@ services:
       dockerfile: Dockerfile
     networks:
       - app
+    volumes:
+      - ./files:/opt/app/files
 
 networks:
   app:
