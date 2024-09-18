@@ -26,13 +26,16 @@ services:
       - app
 
   backend:
+    container_name: backend
     build:
       context: .
       dockerfile: Dockerfile
+    env_file:
+      - .env
     networks:
       - app
     volumes:
-      - ./files:/opt/app/files
+      - ./media_files:/opt/app/media_files
 
 networks:
   app:

@@ -3,6 +3,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import os
+
 from files.routing import router as files_router
 from posts.routing import router as posts_router
 from settings import settings

@@ -13,7 +13,7 @@ from sqlalchemy import and_
 from database import session_factory
 from settings import settings
 
-from .models import User, Subscribe, Message
+from .models import User, Subscribe
 from .schemas import SignUpSchema, Token, UserSchema, SendMessage, \
     UserChatSchema
 
@@ -176,22 +176,5 @@ def unsubscribe(current_user: CurrentUser, author_id: int) -> Response:
         return Response(status_code=status.HTTP_200_OK)
 
 
-def send_message(current_user: CurrentUser, message: SendMessage) -> Response:
-    with session_factory() as session:
-        receiver = session.query(User).filter_by(
-            id=message.receiver_id).first()
-        if receiver is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, )
-        m = Message(sender=current_user, receiver=receiver,
-                    content=message.content, timestamp=datetime.now())
-        session.add(m)
-        session.commit()
-        return Response(status_code=status.HTTP_201_CREATED)
 
 
-def get_chats(current_user: CurrentUser) -> list[UserChatSchema]:
-    with session_factory() as session:
-        last_send_messages = session.query(Message.receiver).filter(
-            Message.sender == current_user).order_by(
-            Message.timestamp.desc()).distinct()
-        print(last_send_messages)

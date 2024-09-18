@@ -8,7 +8,7 @@ from database import Base
 
 
 class FileModel(Base):
-    __tablename__ = "files"
+    __tablename__ = "media_files"
 
     uuid: Mapped[UUID] = mapped_column(Uuid, primary_key=True,
                                        server_default=text(
